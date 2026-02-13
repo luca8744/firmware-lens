@@ -1,0 +1,20 @@
+# Ignore directories
+sensor_logic_ecu_JD/
+analysis/
+docs/
+
+# Build/output files (common in embedded projects)
+*.bin
+*.uvoptx
+*.uvprojx
+*.uvguix*
+*.build_log.htm
+*.TMP
+*.exe
+.settings/
+RTE/
+BINOUTPUT/
+
+# Log/temp files
+*.log
+*.xls
