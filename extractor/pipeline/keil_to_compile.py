@@ -75,7 +75,7 @@ class KeilToCompileCommands(PipelineStep):
                 "clang",
                 "-fsyntax-only",
                 "-target", "arm-none-eabi",
-                "-mcpu=cortex-m3",  # IDENTICO AL VECCHIO
+                "-mcpu=cortex-m3",  
                 "-nostdinc",
                 f"-I{stub_dir}",
                 "-include", os.path.join(stub_dir, "keil_armcc_stubs.h"),

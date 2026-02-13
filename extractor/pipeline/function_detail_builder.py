@@ -4,11 +4,15 @@ import json
 import hashlib
 from .base import PipelineStep, load_json, save_json, ensure_dir, StepIO
 
+
 class FunctionDetailBuilder(PipelineStep):
     name = "08_generate_function_detail"
 
+    # -----------------------------------------------------
+    # IO
+    # -----------------------------------------------------
+
     def io(self, context):
-        # incremental: depends on functions_index + all source files listed inside it
         fn_index = self.config["functions_index"]
         inputs = [fn_index]
         functions = load_json(fn_index) if os.path.exists(fn_index) else {}
@@ -18,6 +22,45 @@ class FunctionDetailBuilder(PipelineStep):
                 inputs.append(fp)
         return StepIO(inputs=inputs, outputs=[self.config["functions_detail_dir"]])
 
+    # -----------------------------------------------------
+    # Helpers
+    # -----------------------------------------------------
+
+    @staticmethod
+    def sanitize_filename(name: str) -> str:
+        """
+        Safe for Windows filesystem.
+        Avoid illegal chars and collisions.
+        """
+        # Replace illegal Windows chars
+        safe = re.sub(r'[<>:"/\\|?*]', "_", name)
+
+        # Replace namespace separators
+        safe = safe.replace("::", "__")
+
+        # Trim spaces
+        safe = safe.strip()
+
+        # Avoid empty filename
+        if not safe:
+            safe = "unnamed"
+
+        # Avoid Windows reserved names
+        reserved = {"CON", "PRN", "AUX", "NUL"}
+        if safe.upper() in reserved:
+            safe += "_fn"
+
+        # Add short hash to avoid collisions
+        short_hash = hashlib.sha1(name.encode("utf-8")).hexdigest()[:8]
+
+        return f"{safe}_{short_hash}"
+
+    @staticmethod
+    def sha1(text: str) -> str:
+        return hashlib.sha1(text.encode("utf-8")).hexdigest()
+
+    # -----------------------------------------------------
+
     def run(self, context):
         fn_index_path = self.config["functions_index"]
         out_dir = self.config["functions_detail_dir"]
@@ -25,9 +68,6 @@ class FunctionDetailBuilder(PipelineStep):
 
         functions = load_json(fn_index_path)
         all_function_names = list(functions.keys())
-
-        def sha1(text: str) -> str:
-            return hashlib.sha1(text.encode("utf-8")).hexdigest()
 
         def find_function_end(lines, start_line):
             brace_count = 0
@@ -67,7 +107,21 @@ class FunctionDetailBuilder(PipelineStep):
             return ("__irq" in body) or ("IRQHandler" in name) or ("Interrupt" in name)
 
         def detect_task(name, body):
-            return ("Task" in name) or ("osThread" in body) or ("xTaskCreate" in body)
+            rtos_patterns = [
+                r"\bxTaskCreate\b",
+                r"\bosThreadNew\b",
+                r"\bosThreadCreate\b",
+                r"\bTaskCreate\b",
+                r"\bCreateTask\b",
+                r"\bTaskManager::create\b"
+            ]
+
+            for p in rtos_patterns:
+                if re.search(p, body):
+                    return True
+
+            return False
+
 
         def detect_global_writes(body):
             assignment_pattern = r"[a-zA-Z_][a-zA-Z0-9_]*\s*="
@@ -89,10 +143,12 @@ class FunctionDetailBuilder(PipelineStep):
 
             end_line = find_function_end(lines, start_line)
             body = "".join(lines[start_line - 1: end_line])
-            body_hash = sha1(body)
+            body_hash = self.sha1(body)
 
-            out_file = os.path.join(out_dir, f"{name}.json")
+            safe_name = self.sanitize_filename(name)
+            out_file = os.path.join(out_dir, f"{safe_name}.json")
 
+            # Incremental skip
             if os.path.exists(out_file):
                 try:
                     old = load_json(out_file)

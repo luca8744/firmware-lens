@@ -1,5 +1,5 @@
 # Ignore directories
-sensor_logic_ecu_JD/
+projects/
 analysis/
 docs/
 
@@ -18,3 +18,8 @@ BINOUTPUT/
 # Log/temp files
 *.log
 *.xls
+
+# Configs
+configs/*
+!configs/config.example.json
+

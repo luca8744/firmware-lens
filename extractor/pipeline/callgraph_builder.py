@@ -2,11 +2,6 @@ import os
 from clang.cindex import Config, Index, CursorKind, TranslationUnit
 from .base import PipelineStep, load_json, save_json, StepIO
 
-def _setup_libclang(config):
-    lib = config.get("libclang") or os.environ.get("LIBCLANG_PATH")
-    if lib:
-        Config.set_library_file(lib)
-
 class CallGraphBuilder(PipelineStep):
     name = "04_extract_call_graph"
 
@@ -17,7 +12,6 @@ class CallGraphBuilder(PipelineStep):
         )
 
     def run(self, context):
-        _setup_libclang(self.config)
 
         compile_commands = load_json(self.config["compile_commands"])
         out_path = self.config["call_graph"]

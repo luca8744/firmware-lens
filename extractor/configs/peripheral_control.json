@@ -1,0 +1,17 @@
+{
+  "toolchain": "visualgdb",
+  "vcxproj": "C:/Work/GitPersonal/firmware-lens/projects/landing-peripheral/Control/control.vcxproj",
+
+  "libclang": "C:/Program Files/LLVM/bin/libclang.dll",
+  
+  "compile_commands": "analysis/compile_commands.json",
+  "functions_index": "analysis/functions_index.json",
+  "function_categories": "analysis/function_categories.json",
+  "call_graph": "analysis/call_graph.json",
+  "tasks": "analysis/tasks.json",
+  "task_call_graph": "analysis/task_call_graph.json",
+  "firmware_ir": "analysis/firmware_ir.json",
+
+  "functions_detail_dir": "analysis/functions_detail",
+  "architecture_overview_md": "analysis/ARCHITECTURE_OVERVIEW.md"
+}
