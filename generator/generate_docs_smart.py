@@ -230,7 +230,7 @@ def main():
     MODULES_DOC.mkdir(exist_ok=True)
 
     functions_index = load_json(OUT_JSON / "functions_index.json")
-    callgraph = load_json(OUT_JSON / "callgraph.json")
+    callgraph = load_json(OUT_JSON / "call_graph.json")
     function_details = load_function_details()
 
     fan_in = compute_fan_in(callgraph)

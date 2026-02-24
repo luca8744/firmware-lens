@@ -151,3 +151,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+#python extractor/pipeline_runner.py --config extractor/configs/config.json 

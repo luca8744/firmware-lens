@@ -1,102 +1,86 @@
-# 🧩 Firmware Lens
- 
-Pipeline di **analisi statica per firmware embedded Keil (STM32)** basata su **clang / libclang**, progettata per analizzare codice **senza compilarlo**, ricostruendo **AST, simboli e dipendenze** a partire da un progetto Keil reale.
- 
+# 🧩 Firmware Lens: Static Analysis Pipeline for C/C++ Firmware
+
+A robust **static analysis pipeline** based on **Clang / libclang** for in-depth analysis of embedded firmware projects (primarily **Keil/STM32** and **VisualGDB**). It is designed to reconstruct the entire **Abstract Syntax Tree (AST), symbols, and dependencies** directly from existing project files ([`.uvprojx`](.uvprojx) or [`.vcxproj`](.vcxproj)) **without requiring code modification or compilation**.
+
 ---
- 
-## 🎯 Scopo del progetto
- 
-Analizzare firmware embedded Keil **così com’è**, senza:
- 
-- modificare il codice sorgente
-- usare toolchain proprietarie
-- simulare l’esecuzione
-- generare binari
- 
-> **Il codice NON viene adattato al tool.  
-> È il tool che simula l’ambiente di compilazione.**
- 
-Questa pipeline replica ciò che fanno tool commerciali di analisi embedded, ma in modo:
-- trasparente
-- estendibile
-- controllabile
-- integrabile con LLM locali
- 
+
+## 🎯 Core Philosophy: Analyze the Code *As-Is*
+
+Firmware Lens is designed to analyze your embedded C/C++ code exactly as it exists in your development environment, removing the friction often associated with static analysis tools.
+
+**Key Advantages:**
+- **No Source Code Modification:** Analyzes code without altering a single line.
+- **Toolchain Independent:** Does not rely on proprietary toolchains (ARMCC, GCC ARM) for the analysis phase.
+- **Static Analysis Only:** No runtime simulation, linking, or binary generation is required.
+- **Simulated Environment:** The tool meticulously simulates the project's compilation environment (include paths, macros, etc.) to ensure accurate AST reconstruction.
+
 ---
- 
-## ✅ Stato attuale
- 
-- **Infrastruttura di Analisi (Stabile):**
-  - ✔ Parsing completo del progetto Keil (`.uvprojx`) tramite [`keil_to_compile_commands.py`](keil_to_compile_commands.py).
-  - ✔ Generazione corretta di `compile_commands.json`.
-  - ✔ Clang configurato con `-nostdinc` e include path simulati (directory [`sensor_logic_ecu_JD/Sensor_Logic_ECU/analysis_stubs/`](sensor_logic_ecu_JD/Sensor_Logic_ECU/analysis_stubs/)).
-  - ✔ AST costruibile **senza errori** e libclang operativo.
-  - ✔ Estrazione funzioni funzionante tramite [`extract_functions.py`](extract_functions.py) e [`extract_all_functions.py`](extract_all_functions.py).
-  - ✔ Warning residui (macro ridefinite, ecc.) gestiti e considerati attesi.
- 
-- **Logica Applicativa (In Sviluppo):**
-  - **Prossimi Step (Definiti in [`extract_task.py`](extract_task.py)):**
-    1. Estensione AST (tutte le funzioni, dichiarazioni, mapping file↔simboli).
-    2. Generazione Call Graph (chi chiama chi, dipendenze driver↔applicazione) tramite [`build_task_call_graph.py`](build_task_call_graph.py).
-    3. RTOS awareness (Task CMSIS, funzioni per task, sincronizzazioni).
-    4. Generazione IR Strutturato stabile (`firmware_ir.json`) tramite [`classify_functions.py`](classify_functions.py).
-    5. Integrazione LLM locale (spiegazione, documentazione, overview architetturali).
- 
+
+## ✨ Features and Capabilities
+
+This pipeline offers advanced analysis capabilities, comparable to commercial embedded tools, while remaining **Transparent, Extendable, and LLM-Integrable**.
+
+### 1. Deep Static Analysis
+The main pipeline processes the project in structured stages, building a rich Intermediate Representation (IR).
+
+| Step | Component | Description |
+| :--- | :--- | :--- |
+| **Project Parsing** | [`extractor/pipeline/keil_to_compile.py`](extractor/pipeline/keil_to_compile.py:1) | Converts `.uvprojx` or `.vcxproj` into a `compile_commands.json` database, capturing all necessary include paths and macro definitions (`-D`). |
+| **IR Construction** | [`extractor/pipeline/function_extractor.py`](extractor/pipeline/function_extractor.py:1) | Uses `libclang` to generate the AST and extract core function metadata (signatures, locations) for the initial IR. |
+| **Call Graph & RTOS** | [`extractor/pipeline/callgraph_builder.py`](extractor/pipeline/callgraph_builder.py:1) | Builds a comprehensive function call graph, and critically, identifies RTOS tasks (CMSIS-RTOS v1/v2 support) to generate a task-centric call graph. |
+| **Function Details** | [`extractor/pipeline/function_detail_builder.py`](extractor/pipeline/function_detail_builder.py:1) | Performs in-depth classification (e.g., Application vs. Driver) and extracts metrics like cyclomatic complexity, global variable usage, and potential side effects. |
+
+### 2. LLM-Powered Documentation
+
+Leverages the resulting static analysis artifacts (`firmware_ir.json`) with local Large Language Models (LLMs) to generate high-quality, contextual documentation.
+
+- **Tools:** [`generator/generate_docs_smart.py`](generator/generate_docs_smart.py:1), [`merge/merge_docs.py`](merge/merge_docs.py:1) (via Ollama).
+- **Output:** Detailed documentation for individual functions, code modules, and high-level architectural overview.
+
+### Stub Environment
+
+The [`analysis_stubs_keil5/`](analysis_stubs_keil5/:1) directory provides the necessary mock headers (minimal libc, BSP, RTOS) used with the Clang `-nostdinc` flag. This ensures symbol resolution without interference from host system standard headers.
+
 ---
- 
-## ⚙️ Strumenti Principali
- 
-### 1. [`keil_to_compile_commands.py`](keil_to_compile_commands.py)
- 
-**Scopo:** Converte un progetto Keil in un database compatibile clang, estraendo sorgenti, include path reali e macro `-D`.
- 
-**Output:** `compile_commands.json`
- 
-**Note:** I comandi generati includono modifiche forzate come `-nostdinc` e `-Ianalysis_stubs`, rendendoli inadatti alla compilazione diretta ma perfetti per l'analisi statica.
- 
-### 2. [`extract_functions.py`](extract_functions.py) & [`extract_all_functions.py`](extract_all_functions.py)
- 
-**Scopo:** Analisi basata su **libclang** per costruire l’AST ed estrarre metadati delle funzioni (nome, ritorno, parametri, posizione).
- 
-**Output:** Prima forma di **IR strutturato** del progetto.
- 
-### 3. Directory degli Stub (`analysis_stubs/`)
- 
-**Scopo:** Fornire una libc / BSP minimale finta per risolvere tipi e simboli, necessaria poiché clang è eseguito con `-nostdinc`. Questi stub **non** servono per la compilazione.
- 
-**Header presenti (Esempi):**
-- `keil_armcc_stubs.h`: Macro specifiche ARMCC e tipi base.
-- `cmsis_os.h`: Definizione di costrutti CMSIS-RTOS v1 (task, event, signal).
-- `Driver_UART.h`: Astrazione driver UART.
- 
+
+## 🚀 Usage
+
+The pipeline is executed via the main runner script using a JSON configuration file that defines the project path and analysis targets.
+
+```bash
+# Example: Run the analysis using a configuration file
+python extractor/pipeline_runner.py extractor/configs/sensor_logic.json
+```
+_Note: The generated `compile_commands.json` file is for static analysis only and is not suitable for direct project compilation._
+
 ---
- 
-## ⚠️ Avvertenze e Limitazioni (Per Design)
- 
-Il sistema è progettato per l'analisi, non per la compilazione:
-- **Non compila, non linka, non genera binari.**
-- **Non esegue codice né verifica la correttezza funzionale.**
-- Non dipende da toolchain proprietarie (ARMCC/GCC ARM).
- 
-I warning riportati da clang (`macro redefined`, `builtin redeclared`, ecc.) **non bloccano l’analisi** e non vengono corretti intenzionalmente.
- 
+
+## ✅ Current Status
+
+The infrastructure is stable and fully operational for static analysis. Firmware Lens is ready to support advanced tasks:
+
+- **Automated Documentation Generation**
+- **In-Depth Code Auditing**
+- **Reverse Engineering Support**
+- **Seamless Local LLM Integration**
+
 ---
- 
-## 🧩 Stato del Progetto e Visione
- 
-L'infrastruttura di analisi è stabile e il firmware è **completamente analizzabile** staticamente. Il progetto è maturo per le fasi di ingegneria inversa e supporto LLM:
- 
-- Autodocumentazione
-- Reverse engineering
-- Auditing
-- Supporto a modelli LLM locali
- 
+
+## ⚠️ Caveats and Limitations (By Design)
+
+The focus on *analysis only* leads to the following intentional design constraints:
+
+- No compilation, linking, or binary output.
+- No code execution or functional correctness verification.
+- Clang warnings (e.g., `macro redefined`) are accepted as they do not impede structural analysis.
+
 ---
- 
-## ✍️ TODO – Dominio Applicativo (Da Compilare)
- 
-Questa sezione è riservata alla documentazione del dominio funzionale del firmware analizzato:
-- Scopo funzionale del firmware.
-- Dominio applicativo (es. Controllo motore, gestione CAN bus).
-- Dispositivo target (es. STM32F205VC).
-- Flussi logici principali (es. Ciclo di campionamento, gestione messaggi Isobus).
+
+## 📝 Application Domain
+
+This section can be customized to document the specific firmware under analysis:
+
+- Functional purpose of the firmware.
+- Application domain (e.g., Motor control, CAN bus management).
+- Target device (e.g., STM32F205VC).
+- Main logical flows (e.g., Sampling cycle, Isobus message handling).
