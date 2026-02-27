@@ -1,8 +1,7 @@
 import os
 import json
-import networkx as nx
-import matplotlib.pyplot as plt
-
+from collections import defaultdict
+from graphviz import Digraph
 
 ANALYSIS_DIR = "analysis"
 CALLGRAPH_PATH = os.path.join(ANALYSIS_DIR, "call_graph.json")
@@ -11,6 +10,8 @@ TASKS_PATH = os.path.join(ANALYSIS_DIR, "tasks.json")
 
 OUT_DIR = os.path.join(ANALYSIS_DIR, "architecture")
 os.makedirs(OUT_DIR, exist_ok=True)
+
+OUTPUT_FILE = os.path.join(OUT_DIR, "architecture_final")
 
 
 # ==========================================
@@ -36,133 +37,95 @@ def is_application_file(path):
     )
 
 
+def module_from_file(path):
+    return os.path.basename(path)
+
+
 # ==========================================
-# 1️⃣ CALLGRAPH (FILTERED)
+# BUILD ARCHITECTURE GRAPH
 # ==========================================
 
-def generate_callgraph(callgraph, functions_index):
-    G = nx.DiGraph()
+def build_architecture_graph(callgraph, functions_index, tasks):
+
+    dot = Digraph("FirmwareArchitecture")
+    dot.attr(rankdir="TB")  # top -> bottom
+    dot.attr("node", shape="box", style="filled", fontname="Helvetica")
+
+    # --------------------------------------
+    # 1️⃣ Collect module dependencies
+    # --------------------------------------
+
+    edge_weights = defaultdict(int)
+    modules = set()
 
     for caller, callees in callgraph.items():
         caller_file = functions_index.get(caller, {}).get("file")
         if not is_application_file(caller_file):
             continue
 
+        caller_mod = module_from_file(caller_file)
+        modules.add(caller_mod)
+
         for callee in callees:
             callee_file = functions_index.get(callee, {}).get("file")
             if not is_application_file(callee_file):
                 continue
 
-            G.add_edge(caller, callee)
+            callee_mod = module_from_file(callee_file)
+            modules.add(callee_mod)
 
-    if G.number_of_nodes() == 0:
-        print("[!] No application-level callgraph found")
-        return
+            if caller_mod != callee_mod:
+                edge_weights[(caller_mod, callee_mod)] += 1
 
-    plt.figure(figsize=(18, 18))
-    pos = nx.spring_layout(G, k=0.5)
-    nx.draw(
-        G,
-        pos,
-        node_size=300,
-        arrows=True,
-        with_labels=True,
-        font_size=6
-    )
+    # --------------------------------------
+    # 2️⃣ TASK LAYER
+    # --------------------------------------
 
-    output = os.path.join(OUT_DIR, "callgraph_filtered.png")
-    plt.savefig(output, dpi=300)
-    plt.close()
+    with dot.subgraph(name="cluster_tasks") as c:
+        c.attr(label="RTOS Tasks", color="red")
+        for task_name in tasks.keys():
+            c.node(task_name, fillcolor="#ffcccc")
 
-    print(f"[✓] Generated {output}")
+    # --------------------------------------
+    # 3️⃣ APPLICATION MODULE LAYER
+    # --------------------------------------
 
+    with dot.subgraph(name="cluster_app") as c:
+        c.attr(label="Application Modules", color="blue")
+        for mod in sorted(modules):
+            c.node(mod, fillcolor="#cce5ff")
 
-# ==========================================
-# 2️⃣ TASK GRAPH
-# ==========================================
-
-def generate_task_graph(tasks):
-    if not tasks:
-        print("[i] No tasks.json found")
-        return
-
-    G = nx.DiGraph()
+    # --------------------------------------
+    # 4️⃣ TASK → MODULE edges
+    # --------------------------------------
 
     for task_name, data in tasks.items():
         for fn in data.get("functions", []):
-            G.add_edge(task_name, fn)
-
-    plt.figure(figsize=(14, 14))
-    pos = nx.spring_layout(G, k=0.7)
-
-    colors = []
-    for node in G.nodes():
-        if node in tasks:
-            colors.append("red")
-        else:
-            colors.append("skyblue")
-
-    nx.draw(
-        G,
-        pos,
-        node_color=colors,
-        node_size=800,
-        with_labels=True,
-        font_size=8
-    )
-
-    output = os.path.join(OUT_DIR, "task_graph.png")
-    plt.savefig(output, dpi=300)
-    plt.close()
-
-    print(f"[✓] Generated {output}")
-
-
-# ==========================================
-# 3️⃣ FILE DEPENDENCY GRAPH
-# ==========================================
-
-def generate_file_dependency(callgraph, functions_index):
-    G = nx.DiGraph()
-
-    for caller, callees in callgraph.items():
-        caller_file = functions_index.get(caller, {}).get("file")
-        if not is_application_file(caller_file):
-            continue
-
-        caller_file = os.path.basename(caller_file)
-
-        for callee in callees:
-            callee_file = functions_index.get(callee, {}).get("file")
-            if not is_application_file(callee_file):
+            file_path = functions_index.get(fn, {}).get("file")
+            if not is_application_file(file_path):
                 continue
 
-            callee_file = os.path.basename(callee_file)
+            module = module_from_file(file_path)
+            dot.edge(task_name, module, color="red")
 
-            if caller_file != callee_file:
-                G.add_edge(caller_file, callee_file)
+    # --------------------------------------
+    # 5️⃣ MODULE → MODULE dependencies
+    # --------------------------------------
 
-    if G.number_of_nodes() == 0:
-        print("[!] No file dependencies found")
-        return
+    for (src, dst), weight in edge_weights.items():
 
-    plt.figure(figsize=(16, 16))
-    pos = nx.spring_layout(G, k=0.6)
+        if weight < 3:  # filtro rumore
+            continue
 
-    nx.draw(
-        G,
-        pos,
-        node_size=1500,
-        with_labels=True,
-        font_size=8,
-        arrows=True
-    )
+        penwidth = str(min(1 + weight * 0.3, 5))
+        dot.edge(src, dst, label=str(weight), penwidth=penwidth)
 
-    output = os.path.join(OUT_DIR, "file_dependency.png")
-    plt.savefig(output, dpi=300)
-    plt.close()
+    # --------------------------------------
+    # RENDER PNG
+    # --------------------------------------
 
-    print(f"[✓] Generated {output}")
+    dot.render(OUTPUT_FILE, format="png", cleanup=True)
+    print(f"[✓] Generated {OUTPUT_FILE}.png")
 
 
 # ==========================================
@@ -170,15 +133,13 @@ def generate_file_dependency(callgraph, functions_index):
 # ==========================================
 
 def main():
-    print("\n=== GENERATE ARCHITECTURE GRAPHS (Filtered Embedded) ===\n")
+    print("\n=== GENERATE FINAL FIRMWARE ARCHITECTURE PNG ===\n")
 
     callgraph = load_json(CALLGRAPH_PATH)
     functions_index = load_json(FUNCTIONS_INDEX_PATH)
     tasks = load_json(TASKS_PATH)
 
-    generate_callgraph(callgraph, functions_index)
-    generate_task_graph(tasks)
-    generate_file_dependency(callgraph, functions_index)
+    build_architecture_graph(callgraph, functions_index, tasks)
 
     print("\n🎯 Done.\n")
 
