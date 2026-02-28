@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import json
 from collections import defaultdict
@@ -52,7 +68,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
     dot.attr("node", shape="box", style="filled", fontname="Helvetica")
 
     # --------------------------------------
-    # 1️⃣ Collect module dependencies
+    # 1ï¸âƒ£ Collect module dependencies
     # --------------------------------------
 
     edge_weights = defaultdict(int)
@@ -78,7 +94,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
                 edge_weights[(caller_mod, callee_mod)] += 1
 
     # --------------------------------------
-    # 2️⃣ TASK LAYER
+    # 2ï¸âƒ£ TASK LAYER
     # --------------------------------------
 
     with dot.subgraph(name="cluster_tasks") as c:
@@ -87,7 +103,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
             c.node(task_name, fillcolor="#ffcccc")
 
     # --------------------------------------
-    # 3️⃣ APPLICATION MODULE LAYER
+    # 3ï¸âƒ£ APPLICATION MODULE LAYER
     # --------------------------------------
 
     with dot.subgraph(name="cluster_app") as c:
@@ -96,7 +112,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
             c.node(mod, fillcolor="#cce5ff")
 
     # --------------------------------------
-    # 4️⃣ TASK → MODULE edges
+    # 4ï¸âƒ£ TASK â†’ MODULE edges
     # --------------------------------------
 
     for task_name, data in tasks.items():
@@ -109,7 +125,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
             dot.edge(task_name, module, color="red")
 
     # --------------------------------------
-    # 5️⃣ MODULE → MODULE dependencies
+    # 5ï¸âƒ£ MODULE â†’ MODULE dependencies
     # --------------------------------------
 
     for (src, dst), weight in edge_weights.items():
@@ -125,7 +141,7 @@ def build_architecture_graph(callgraph, functions_index, tasks):
     # --------------------------------------
 
     dot.render(OUTPUT_FILE, format="png", cleanup=True)
-    print(f"[✓] Generated {OUTPUT_FILE}.png")
+    print(f"[âœ“] Generated {OUTPUT_FILE}.png")
 
 
 # ==========================================
@@ -141,7 +157,7 @@ def main():
 
     build_architecture_graph(callgraph, functions_index, tasks)
 
-    print("\n🎯 Done.\n")
+    print("\nðŸŽ¯ Done.\n")
 
 
 if __name__ == "__main__":

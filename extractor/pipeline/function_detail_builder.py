@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import re
 import json
@@ -135,7 +151,7 @@ class FunctionDetailBuilder(PipelineStep):
             start_line = meta["line"]
 
             if not os.path.exists(src_file):
-                self.log(f"⚠ file non trovato: {src_file}")
+                self.log(f"âš  file non trovato: {src_file}")
                 continue
 
             with open(src_file, "r", encoding="utf-8", errors="ignore") as f:
@@ -182,4 +198,5 @@ class FunctionDetailBuilder(PipelineStep):
             generated += 1
 
         context["functions_detail_dir"] = out_dir
-        self.log(f"✔ Generated: {generated}, skipped: {skipped}")
+        self.log(f"âœ” Generated: {generated}, skipped: {skipped}")
+

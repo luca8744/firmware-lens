@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import json
 import math
@@ -187,8 +203,8 @@ def write_report(df, sccs):
             "```\n"
             "I = FanOut / (FanIn + FanOut)\n"
             "```\n\n"
-            "- I → 0 → Stable module\n"
-            "- I → 1 → Highly dependent module\n\n"
+            "- I â†’ 0 â†’ Stable module\n"
+            "- I â†’ 1 â†’ Highly dependent module\n\n"
         )
 
         f.write("### Betweenness Centrality\n")
@@ -240,11 +256,11 @@ def write_report(df, sccs):
             f.write("No cyclic module dependencies detected.\n")
         else:
             for comp in sccs:
-                f.write(f"- Cycle ({len(comp)} modules): " + " → ".join(comp) + "\n")
+                f.write(f"- Cycle ({len(comp)} modules): " + " â†’ ".join(comp) + "\n")
 
         f.write("\n\nReport generated automatically by Firmware Lens.\n")
 
-    print(f"[✓] Generated report: {report_path}")
+    print(f"[âœ“] Generated report: {report_path}")
 
 
 # ==============================
@@ -274,11 +290,11 @@ def main():
     hotspots_csv = os.path.join(OUT_DIR, "module_hotspots.csv")
     df_hotspots.to_csv(hotspots_csv, index=False)
 
-    print(f"[✓] Saved CSV: {hotspots_csv}")
+    print(f"[âœ“] Saved CSV: {hotspots_csv}")
 
     write_report(df_hotspots, sccs)
 
-    print("\n🎯 Done.\n")
+    print("\nðŸŽ¯ Done.\n")
 
 
 if __name__ == "__main__":

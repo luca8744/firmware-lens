@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import re
 from clang.cindex import Index, CursorKind, TranslationUnit
@@ -98,7 +114,7 @@ class TaskExtractor(PipelineStep):
                 start_line = max(1, min(start_line, len(lines)))
 
             # Take a window from some lines ABOVE start() to include initializer list.
-            # In your code it’s usually within ~5-60 lines above.
+            # In your code itâ€™s usually within ~5-60 lines above.
             lo = max(0, start_line - 1 - 120)
             hi = min(len(lines), start_line - 1 + 5)
             window = "\n".join(lines[lo:hi])
@@ -217,3 +233,4 @@ class TaskExtractor(PipelineStep):
         save_json(out_path, tasks)
         context["tasks"] = out_path
         self.log(f"Extracted {len(tasks)} tasks")
+

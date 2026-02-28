@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import json
 import requests
 import hashlib
@@ -143,7 +159,7 @@ def generate_function_doc(name, meta, detail, callgraph):
     if meta.get("file") and meta.get("line"):
         body = extract_function_body(meta["file"], meta["line"])
 
-    # ⚠ Rimuoviamo raw_body e body_hash dal JSON passato al LLM
+    # âš  Rimuoviamo raw_body e body_hash dal JSON passato al LLM
     detail_for_llm = dict(detail)
     detail_for_llm.pop("raw_body", None)
     detail_for_llm.pop("body_hash", None)
@@ -328,6 +344,7 @@ if __name__ == "__main__":
 #python generator/generate_docs_smart.py --mode architecture
 #python generator/generate_docs_smart.py --mode modules
 #python generator/generate_docs_smart.py --mode functions --batch-size 30
+
 
 
 

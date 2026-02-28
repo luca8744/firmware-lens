@@ -1,3 +1,19 @@
+﻿# Firmware Lens - A tool for firmware architecture analysis and documentation.
+# Copyright (C) 2026 Luca Miliciani
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 import os
 import json
 from collections import defaultdict
@@ -44,7 +60,7 @@ def classify_layer(file_path):
 
 
 # ==========================================
-# 1️⃣ LAYERED ARCHITECTURE
+# 1ï¸âƒ£ LAYERED ARCHITECTURE
 # ==========================================
 
 def generate_layered_diagram(callgraph, functions_index, tasks):
@@ -52,7 +68,7 @@ def generate_layered_diagram(callgraph, functions_index, tasks):
     lines = []
     lines.append("graph TD\n")
 
-    # Tasks → Application
+    # Tasks â†’ Application
     for task_name, data in tasks.items():
         for fn in data.get("functions", []):
             file_path = functions_index.get(fn, {}).get("file")
@@ -62,7 +78,7 @@ def generate_layered_diagram(callgraph, functions_index, tasks):
             module = os.path.basename(file_path)
             lines.append(f"{task_name} --> {module}\n")
 
-    # Application → lower layers
+    # Application â†’ lower layers
     for caller, callees in callgraph.items():
         caller_file = functions_index.get(caller, {}).get("file")
         if not caller_file:
@@ -86,11 +102,11 @@ def generate_layered_diagram(callgraph, functions_index, tasks):
     with open(output_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    print(f"[✓] Generated {output_path}")
+    print(f"[âœ“] Generated {output_path}")
 
 
 # ==========================================
-# 2️⃣ APPLICATION MODULE DEPENDENCIES
+# 2ï¸âƒ£ APPLICATION MODULE DEPENDENCIES
 # ==========================================
 
 def generate_application_module_diagram(callgraph, functions_index):
@@ -124,11 +140,11 @@ def generate_application_module_diagram(callgraph, functions_index):
     with open(output_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    print(f"[✓] Generated {output_path}")
+    print(f"[âœ“] Generated {output_path}")
 
 
 # ==========================================
-# 3️⃣ APPLICATION FILE DEPENDENCIES
+# 3ï¸âƒ£ APPLICATION FILE DEPENDENCIES
 # ==========================================
 
 def generate_file_dependency_diagram(callgraph, functions_index):
@@ -162,7 +178,7 @@ def generate_file_dependency_diagram(callgraph, functions_index):
     with open(output_path, "w", encoding="utf-8") as f:
         f.writelines(lines)
 
-    print(f"[✓] Generated {output_path}")
+    print(f"[âœ“] Generated {output_path}")
 
 
 # ==========================================
@@ -180,7 +196,7 @@ def main():
     generate_application_module_diagram(callgraph, functions_index)
     generate_file_dependency_diagram(callgraph, functions_index)
 
-    print("\n🎯 Done.\n")
+    print("\nðŸŽ¯ Done.\n")
 
 
 if __name__ == "__main__":
