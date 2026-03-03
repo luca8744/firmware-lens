@@ -53,9 +53,11 @@ for key in CONFIG:
         or key.endswith("_md")
         or key.endswith("_json")
         or key.endswith("_commands")
-        or key in ["uvprojx", "vcxproj", "stub_dir"]
+        or key in ["uvprojx", "vcxproj", "stub_dir", "project_root"]
     ):
         CONFIG[key] = normalize_path(CONFIG[key])
+    
+    print(f"key: {CONFIG[key]}")
 
 # ---------------------------
 # SET LIBCLANG EARLY
@@ -81,7 +83,6 @@ from pipeline.function_detail_builder import FunctionDetailBuilder
 from pipeline.architecture_view_builder import ArchitectureViewBuilder
 from pipeline.base import PipelineContext
 
-
 # ---------------------------
 # TOOLCHAIN FACTORY
 # ---------------------------
@@ -97,21 +98,35 @@ def build_compile_step(config, force):
         from pipeline.visualgdb_to_compile import VisualGDBToCompileCommands
         return VisualGDBToCompileCommands(config, force=force)
 
-    #elif toolchain == "compile_commands":
-    #    from pipeline.compile_commands_loader import CompileCommandsLoader
-    #    return CompileCommandsLoader(config, force=force)
+    elif toolchain == "csharp":
+        from pipeline.csharp_to_compile import CSharpToCompileCommands
+        return CSharpToCompileCommands(config, force=force)
+
+    elif toolchain == "compile_commands":
+        from pipeline.commands_to_compile import CompileCommandsLoader
+        return CompileCommandsLoader(config, force=force)
+
+    elif toolchain == "loose_cpp":
+        # 🔥 Loose mode does not need a compile step
+        return None
 
     else:
         raise ValueError(f"Unsupported toolchain: {toolchain}")
-
 
 # ---------------------------
 # PIPELINE BUILD
 # ---------------------------
 
 def build_steps(config, force: bool):
-    return [
-        build_compile_step(config, force),
+
+    compile_step = build_compile_step(config, force)
+
+    steps = []
+
+    if compile_step is not None:
+        steps.append(compile_step)
+
+    steps.extend([
         FunctionExtractor(config, force=force),
         FunctionClassifier(config, force=force),
         CallGraphBuilder(config, force=force),
@@ -120,8 +135,13 @@ def build_steps(config, force: bool):
         IRBuilder(config, force=force),
         FunctionDetailBuilder(config, force=force),
         ArchitectureViewBuilder(config, force=force),
-    ]
+    ])
 
+    return steps
+
+# ---------------------------
+# STEP FILTERING
+# ---------------------------
 
 def filter_steps(steps, only=None, start=None, end=None):
     names = [s.name for s in steps]
@@ -145,21 +165,56 @@ def filter_steps(steps, only=None, start=None, end=None):
 
     return steps
 
-
 # ---------------------------
 # MAIN EXECUTION
 # ---------------------------
 
 def main():
     ctx = PipelineContext()
+
     steps = build_steps(CONFIG, force=args.force)
     steps = filter_steps(steps, only=args.only, start=args.start, end=args.end)
 
     for step in steps:
         print(f"\n=== {step.name} ===")
+
+        # ----------------------------------------
+        # Skip clang-based steps if C# extractor ran
+        # ----------------------------------------
+        if ctx.get("skip_clang") and step.name in [
+            "02_extract_all_functions",
+            "03_classify_functions",
+            "04_build_callgraph",
+            "05_extract_task",
+            "06_build_task_callgraph",
+        ]:
+            print(f"[{step.name}] SKIP (not applicable for C#)")
+            continue
+
+        # ----------------------------------------
+        # Skip firmware-only steps in loose mode
+        # ----------------------------------------
+        if CONFIG.get("toolchain") == "loose_cpp" and step.name in [
+            "05_extract_task",
+            "06_build_task_callgraph",
+        ]:
+            print(f"[{step.name}] SKIP (not supported in loose_cpp mode)")
+            continue
+
+        # ----------------------------------------
+        # Skip task-related steps if not firmware
+        # ----------------------------------------
+        if CONFIG.get("project_type") != "firmware" and step.name in [
+            "05_extract_task",
+            "06_build_task_callgraph",
+        ]:
+            print(f"[{step.name}] SKIP (not a firmware project)")
+            continue
+
         if step.should_skip(ctx):
             print(f"[{step.name}] SKIP (up-to-date)")
             continue
+
         step.run(ctx)
 
     print("\nDONE")

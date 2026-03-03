@@ -1,16 +1,17 @@
 {
-  "toolchain": "keil",
-  "uvprojx": "C:/Work/GitPersonal/firmware-lens/projects/dg600_ht_graphics_dev_dd/DG600_HT/DG600_ST.uvprojx",
-  "libclang": "C:/Program Files/LLVM/bin/libclang.dll",
-  "stub_dir": "C:/Work/GitPersonal/firmware-lens/analysis_stubs/keil5",
+  "toolchain": "loose_cpp",
   "project_type": "firmware",
-  "target": "arm-none-eabi",
-  "mcpu": "cortex-m3",
 
-  "compile_commands": "analysis/compile_commands.json",
+  "libclang": "C:/Program Files/LLVM/bin/libclang.dll",
+
+  "project_root": "C:\\Work\\GitPersonal\\firmware-lens\\projects\\landing_4.0_rel_1_2_6",
+  "source_dir": "C:\\Work\\GitPersonal\\firmware-lens\\projects\\landing_4.0_rel_1_2_6\\source",
+  "loose_stub_dir": "analysis_stubs/qt",
+  
   "functions_index": "analysis/functions_index.json",
   "function_categories": "analysis/function_categories.json",
   "call_graph": "analysis/call_graph.json",
+
   "tasks": "analysis/tasks.json",
   "task_call_graph": "analysis/task_call_graph.json",
   "firmware_ir": "analysis/firmware_ir.json",
