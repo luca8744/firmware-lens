@@ -3,10 +3,8 @@
   "uvprojx": "C:/Work/GitPersonal/firmware-lens/projects/sensor_logic_ecu_JD/Sensor_Logic_ECU/Sensor_Logic_ECU.uvprojx",
   "libclang": "C:/Program Files/LLVM/bin/libclang.dll",
   "stub_dir": "C:/Work/GitPersonal/firmware-lens/analysis_stubs_keil5",
-
   "target": "arm-none-eabi",
   "mcpu": "cortex-m3",
-
   "compile_commands": "analysis/compile_commands.json",
   "functions_index": "analysis/functions_index.json",
   "function_categories": "analysis/function_categories.json",
@@ -14,7 +12,9 @@
   "tasks": "analysis/tasks.json",
   "task_call_graph": "analysis/task_call_graph.json",
   "firmware_ir": "analysis/firmware_ir.json",
-
   "functions_detail_dir": "analysis/functions_detail",
-  "architecture_overview_md": "analysis/ARCHITECTURE_OVERVIEW.md"
+  "architecture_overview_md": "analysis/ARCHITECTURE_OVERVIEW.md",
+  "llm_url": "http://localhost:11434/api/generate",
+  "llm_model": "mistral",
+  "log_dir": "logs"
 }

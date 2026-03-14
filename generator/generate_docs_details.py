@@ -26,19 +26,31 @@ from pathlib import Path
 import sys
 
 # -------------------------------------------------
-# Configuration
+# ARGUMENT PARSING & CONFIG
 # -------------------------------------------------
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "mistral"
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", required=True, help="Path to project config JSON")
+parser.add_argument("--module", help="Generate docs only for this module (filename or full path)")
+parser.add_argument("--pattern", help="Generate docs only for functions matching pattern")
+parser.add_argument("--exclude-drivers", action="store_true",
+                    help="Exclude drivers/cmsis/middleware")
+args = parser.parse_args()
 
-OUT_JSON = Path("analysis")
-DETAILS_DIR = OUT_JSON / "functions_detail"
+with open(args.config, "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-DOCS_DIR = Path("docs")
+OLLAMA_URL = CONFIG.get("llm_url", "http://localhost:11434/api/generate")
+MODEL = CONFIG.get("llm_model", "mistral")
+
+FUNCTIONS_INDEX_PATH = Path(CONFIG.get("functions_index", "analysis/functions_index.json"))
+CALLGRAPH_PATH = Path(CONFIG.get("call_graph", "analysis/callgraph.json"))
+DETAILS_DIR = Path(CONFIG.get("functions_detail_dir", "analysis/functions_detail"))
+
+DOCS_DIR = Path(CONFIG.get("docs_dir", "docs"))
 FUNCTIONS_DOC = DOCS_DIR / "functions"
 MODULES_DOC = DOCS_DIR / "modules"
-
+ARCHITECTURE_OVERVIEW_PATH = Path(CONFIG.get("architecture_overview_md", "analysis/architecture_overview.md"))
 
 # -------------------------------------------------
 # Utils
@@ -179,12 +191,6 @@ def main():
 
     print("=== Firmware Lens Documentation Generator ===")
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--module", help="Generate docs only for this module (filename or full path)")
-    parser.add_argument("--pattern", help="Generate docs only for functions matching pattern")
-    parser.add_argument("--exclude-drivers", action="store_true",
-                        help="Exclude drivers/cmsis/middleware")
-    args = parser.parse_args()
 
     INCLUDE_MODULE = args.module.lower() if args.module else None
     INCLUDE_PATTERN = args.pattern
@@ -202,8 +208,8 @@ def main():
     # Load data
     # -------------------------------------------------
 
-    functions_index = load_json(OUT_JSON / "functions_index.json")
-    callgraph = load_json(OUT_JSON / "callgraph.json")
+    functions_index = load_json(FUNCTIONS_INDEX_PATH)
+    callgraph = load_json(CALLGRAPH_PATH)
     function_details = load_function_details()
 
     print("Loaded functions:", len(functions_index))
@@ -293,10 +299,10 @@ def main():
 
     readme = ["# Firmware Documentation\n"]
 
-    arch_path = OUT_JSON / "architecture_overview.md"
+    arch_path = ARCHITECTURE_OVERVIEW_PATH
     if arch_path.exists():
         readme.append("## Architecture")
-        readme.append("- See: ../analysis/architecture_overview.md\n")
+        readme.append(f"- See: {arch_path}\n")
 
     readme.append("## Modules")
     for m in sorted(MODULES_DOC.glob("*.md")):

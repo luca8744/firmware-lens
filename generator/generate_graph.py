@@ -16,15 +16,29 @@
 
 import os
 import json
+import argparse
 from collections import defaultdict
 from graphviz import Digraph
 
-ANALYSIS_DIR = "analysis"
-CALLGRAPH_PATH = os.path.join(ANALYSIS_DIR, "call_graph.json")
-FUNCTIONS_INDEX_PATH = os.path.join(ANALYSIS_DIR, "functions_index.json")
-TASKS_PATH = os.path.join(ANALYSIS_DIR, "tasks.json")
+# ==========================================
+# CONFIG SETUP
+# ==========================================
 
-OUT_DIR = os.path.join(ANALYSIS_DIR, "architecture")
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", required=True, help="Path to project config JSON")
+args = parser.parse_args()
+
+with open(args.config, "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
+
+def get_path(key, default):
+    return CONFIG.get(key, default)
+
+CALLGRAPH_PATH = get_path("call_graph", "analysis/call_graph.json")
+FUNCTIONS_INDEX_PATH = get_path("functions_index", "analysis/functions_index.json")
+TASKS_PATH = get_path("tasks", "analysis/tasks.json")
+
+OUT_DIR = get_path("architecture_dir", "analysis/architecture")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 OUTPUT_FILE = os.path.join(OUT_DIR, "architecture_final")

@@ -1,54 +1,45 @@
 {
   "_comment": "Firmware Lens - Static Architecture Analysis Configuration",
-
   "_toolchain_info": "Select one: keil | visualgdb | compile_commands | loose_cpp",
   "toolchain": "loose_cpp",
-
   "_project_type_info": "Optional: firmware | desktop (used to adapt pipeline behavior)",
   "project_type": "desktop",
-
   "_libclang_info": "Absolute path to libclang shared library (optional if LIBCLANG_PATH env variable is set)",
   "libclang": "C:/Program Files/LLVM/bin/libclang.dll",
-
   "_project_root_info": "Root directory of the project (recommended for filtering and relative paths)",
   "project_root": "C:/Path/To/YourProject",
-
   "_source_dir_info": "Used ONLY for loose_cpp mode (directory containing .c/.cpp files)",
   "source_dir": "src",
-
   "_compile_commands_info": "Used ONLY if toolchain = compile_commands",
   "compile_commands": "build/compile_commands.json",
-
   "_keil_project_info": "Used ONLY if toolchain = keil",
   "uvprojx": "path/to/your/project.uvprojx",
-
   "_visualgdb_project_info": "Used ONLY if toolchain = visualgdb",
   "vcxproj": "path/to/your/project.vcxproj",
-
   "_stub_dir_info": "Required ONLY for keil (ARMCC compatibility stubs)",
   "stub_dir": "analysis_stubs",
-
   "_loose_stub_info": "Optional include directory for loose_cpp mode (e.g. Qt stubs)",
   "loose_stub_dir": "analysis_stubs/qt",
-
   "_armcc_stub_header_info": "Stub header for ARMCC emulation (keil only)",
   "armcc_stub_header": "keil_armcc_stubs.h",
-
   "_target_info": "Optional target triple override (firmware only)",
   "target": "arm-none-eabi",
-
   "_mcpu_info": "MCU core (firmware only, e.g. cortex-m4)",
   "mcpu": "cortex-m4",
-
   "_output_paths_info": "All generated artifacts",
-
+  "log_dir": "logs",
   "functions_index": "analysis/functions_index.json",
   "function_categories": "analysis/function_categories.json",
   "call_graph": "analysis/call_graph.json",
   "tasks": "analysis/tasks.json",
   "task_call_graph": "analysis/task_call_graph.json",
   "firmware_ir": "analysis/firmware_ir.json",
-
   "functions_detail_dir": "analysis/functions_detail",
-  "architecture_overview_md": "analysis/ARCHITECTURE_OVERVIEW.md"
+  "architecture_overview_md": "analysis/ARCHITECTURE_OVERVIEW.md",
+  "architecture_dir": "analysis/architecture",
+  "_docs_info": "Documentation paths",
+  "docs_dir": "docs",
+  "_llm_info": "LLM text generation settings",
+  "llm_url": "http://localhost:11434/api/generate",
+  "llm_model": "mistral"
 }

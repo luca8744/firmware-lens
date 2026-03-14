@@ -21,20 +21,30 @@ import argparse
 from pathlib import Path
 
 # ==============================
-# CONFIG
+# ARGUMENT PARSING & CONFIG
 # ==============================
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-MODEL = "mistral"
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", required=True, help="Path to project config JSON")
+parser.add_argument("--mode", choices=["architecture", "modules", "functions"], required=True)
+parser.add_argument("--batch-size", type=int, default=30)
+args = parser.parse_args()
 
-OUT_JSON = Path("analysis")
-DETAILS_DIR = OUT_JSON / "functions_detail"
+with open(args.config, "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
 
-DOCS_DIR = Path("docs")
+OLLAMA_URL = CONFIG.get("llm_url", "http://localhost:11434/api/generate")
+MODEL = CONFIG.get("llm_model", "mistral")
+
+FUNCTIONS_INDEX_PATH = Path(CONFIG.get("functions_index", "analysis/functions_index.json"))
+CALLGRAPH_PATH = Path(CONFIG.get("call_graph", "analysis/call_graph.json"))
+DETAILS_DIR = Path(CONFIG.get("functions_detail_dir", "analysis/functions_detail"))
+
+DOCS_DIR = Path(CONFIG.get("docs_dir", "docs"))
 FUNCTIONS_DOC = DOCS_DIR / "functions"
 MODULES_DOC = DOCS_DIR / "modules"
 
-CACHE_FILE = Path("docs/doc_cache.json")
+CACHE_FILE = DOCS_DIR / "doc_cache.json"
 
 
 # ==============================
@@ -236,17 +246,12 @@ Output:
 
 def main():
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--mode", choices=["architecture", "modules", "functions"], required=True)
-    parser.add_argument("--batch-size", type=int, default=30)
-    args = parser.parse_args()
-
     DOCS_DIR.mkdir(exist_ok=True)
     FUNCTIONS_DOC.mkdir(exist_ok=True)
     MODULES_DOC.mkdir(exist_ok=True)
 
-    functions_index = load_json(OUT_JSON / "functions_index.json")
-    callgraph = load_json(OUT_JSON / "call_graph.json")
+    functions_index = load_json(FUNCTIONS_INDEX_PATH)
+    callgraph = load_json(CALLGRAPH_PATH)
     function_details = load_function_details()
 
     fan_in = compute_fan_in(callgraph)

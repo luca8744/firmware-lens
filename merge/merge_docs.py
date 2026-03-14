@@ -14,9 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+import argparse
+import json
 from pathlib import Path
 
-DOCS_DIR = Path("docs")
+# ==========================================
+# CONFIG SETUP
+# ==========================================
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", required=True, help="Path to project config JSON")
+args = parser.parse_args()
+
+with open(args.config, "r", encoding="utf-8") as f:
+    CONFIG = json.load(f)
+
+DOCS_DIR = Path(CONFIG.get("docs_dir", "docs"))
 FUNCTIONS_DIR = DOCS_DIR / "functions"
 MODULES_DIR = DOCS_DIR / "modules"
 
