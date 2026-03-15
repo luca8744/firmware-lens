@@ -23,3 +23,8 @@ BINOUTPUT/
 configs/*
 !configs/config.example.json
 
+# PyInstaller UI Build
+orchestrator/artifact/build/
+orchestrator/artifact/*.spec
+!orchestrator/artifact/dist/
+!orchestrator/artifact/dist/*.exe

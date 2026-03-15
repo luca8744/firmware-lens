@@ -72,8 +72,27 @@ The pipeline execution is driven by a `.json` configuration file. Recent updates
 
 ## 🚀 Usage
 
-### 1. Running the Automated Pipeline (Recommended)
-You can run the entire pipeline—from extraction to generation and final documentation merging—using the orchestrator script. This is the fastest and safest way to execute the analysis.
+### 1. Graphical Interface (UI - Recommended)
+You can use the built-in graphical interface to easily select your project folder, toolchain, and generate the configuration file. It also provides a one-click execution of the pipeline.
+
+**Using the Python Script:**
+```bash
+python orchestrator/artifact/run_ui.py
+```
+
+**Using the Standalone Executable:**
+A portable executable is available to run the UI without launching Python manually. It is located at `orchestrator/artifact/dist/OrchestratorUI.exe`.
+*(Note: the executable must remain in its dist folder or the repository root to find the underlying python pipeline scripts).*
+
+To build or rebuild the executable yourself, run:
+```bash
+cd orchestrator/artifact
+pip install pyinstaller
+pyinstaller --onefile --noconsole --name OrchestratorUI run_ui.py
+```
+
+### 2. Command Line Automated Pipeline
+You can run the entire pipeline—from extraction to generation and final documentation merging—using the orchestrator script via CLI. Note that the UI does exactly this under the hood.
 
 Before starting the pipeline, the orchestrator runs **Pre-flight Checks** to ensure your environment has the necessary tools installed:
 - **`cmake`**: Required for parsing C/C++ projects.
